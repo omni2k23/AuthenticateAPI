@@ -15,8 +15,8 @@ class Customer(models.Model):
     expiration_date = models.DateField()
 
     class Meta:
-        app_label = 'OrderAPI'
-        db_table = 'public.customer'
+        app_label = 'AuthenticateAPI'
+        db_table = 'customer'
 
 
 class Driver(models.Model):
@@ -33,5 +33,5 @@ class Driver(models.Model):
     model = models.TextField()
 
     class Meta:
-        app_label = 'OrderAPI'
-        db_table = 'public.driver'
+        app_label = 'AuthenticateAPI'
+        db_table = 'driver'
