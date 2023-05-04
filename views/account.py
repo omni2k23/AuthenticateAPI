@@ -33,7 +33,9 @@ def create_account(request: HttpRequest):
             )
             # Save the customer to the database
             new_customer.save()
-            response_body["account_id"] = new_customer.id
+            customer = Customer.objects.get(email=payload["email"])
+            response_body["account_type"] = 'customer'
+            response_body["account_id"] = customer.customer_id
         else:
             new_driver = Driver(
                 email=payload["email"],
@@ -48,8 +50,13 @@ def create_account(request: HttpRequest):
                 model=payload["model"],
             )
             new_driver.save()
-            response_body["account_id"] = new_driver.id
-        return HttpResponse(response_body, status=200)
+            driver = Driver.objects.get(email=payload["email"])
+            response_body["account_type"] = 'driver'
+            response_body["account_id"] = driver.driver_id
+        
+        response = JsonResponse(response_body)
+        response.status_code = 200
+        return response
         
     except:
         return HttpResponse("Payload wrong. Please refer to docs", status=400)
@@ -59,26 +66,35 @@ def create_account(request: HttpRequest):
 def authenticate(request: HttpRequest):
     payload = json.loads(request.body)
     email = payload["email"]
-    if payload["account_type"] == "customer":
-        try:
-            customer = Customer.objects.get(email=email)
-        except Customer.DoesNotExist:
-            return HttpResponse("Invalid email or password", status=401)
-
-        if check_password(payload["password"], customer.password):
-            return HttpResponse("Authenticated", status=200)
-        else:
-            return HttpResponse("Invalid email or password", status=401)
-    else:
+    password = payload["password"]
+    response_body = {}
+    
+    try:
+        customer = Customer.objects.get(email=email)
+    except Customer.DoesNotExist:
         try:
             driver = Driver.objects.get(email=email)
         except Driver.DoesNotExist:
             return HttpResponse("Invalid email or password", status=401)
 
-        if check_password(payload["password"], driver.password):
-            return HttpResponse("Authenticated", status=200)
+        if check_password(password, driver.password):
+            response_body["account_id"] = driver.driver_id
+            response_body['account_type'] = "driver"
+            response = JsonResponse(response_body)
+            response.status_code = 200
+            return response
         else:
             return HttpResponse("Invalid email or password", status=401)
+    response_body["account_id"] = customer.customer_id
+    response_body['account_type'] = "customer"
+    if check_password(password, customer.password):
+        response = JsonResponse(response_body)
+        response.status_code = 200
+        return response
+    else:
+        return HttpResponse("Invalid email or password", status=401)
+
+        
 
         
  
